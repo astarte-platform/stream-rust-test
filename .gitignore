@@ -7,3 +7,6 @@
 .idea/
 
 .pre-commit-config.yaml
+
+# file containing astarte configuration environment variables
+**/.env

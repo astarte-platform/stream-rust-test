@@ -1,0 +1,29 @@
+# This file can be used to properly set up the connection configuration with Astarte.
+#
+# It is possible to either use a direct mqtt to Astarte or a grpc connection to an Astarte Message Hub running instance
+# aalready connected to Astarte.
+
+# ####################################################
+# Use the following to connect through MQTT to Astarte
+# ####################################################
+[astarte]
+connection = "mqtt"
+store_directory = "/tmp/stream-rust-test/store/"
+
+[astarte.mqtt]
+realm = "REALM_NAME_HERE"
+device_id = "DEVICE_ID_HERE"
+pairing_url = "PAIRING_URL_HERE"
+credentials_secret = "CREDENTIALS_SECRET_HERE"
+#pairing_token = "PAIRING_TOKEN_HERE"
+astarte_ignore_ssl = false
+
+# ####################################################
+# Use the following to connect through gRPC to Astarte
+# ####################################################
+#[astarte]
+#connection = "grpc"
+#store_directory = "/tmp/stream-rust-test/store/"
+#
+#[astarte.grpc]
+#endpoint = "http://[::1]:50051"
