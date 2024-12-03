@@ -21,10 +21,11 @@ description = "Astarte Rust SDK based data stream test."
 astarte-device-sdk = { version = "0.9.2", features = ["message-hub"] }
 clap = { version = "=4.4.18", features = ["derive", "env", "string"] }
 color-eyre = "0.6.3"
-toml = "0.8.12"
-tokio = { version = "1.37.0", features = ["rt-multi-thread", "sync", "macros", "signal"] }
-tracing = "0.1.37"
-tracing-subscriber = { version = "0.3.0", features = ["env-filter"]}
+futures = "0.3.30"
 rand = "0.8.5"
 serde = { version = "1.0.207", features = ["derive"] }
+tokio = { version = "1.37.0", features = ["rt-multi-thread", "sync", "macros", "signal"] }
+toml = "0.8.12"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.0", features = ["env-filter"]}
 uuid = { version = "1.10.0", features = ["v4", "serde"] }
