@@ -115,3 +115,94 @@ You can also set the stream options by using the following environment variables
 - `INTERFACE_NAME`
 - `INTERVAL_BTW_SAMPLES`
 - `SCALE`
+
+## Docker
+
+### Build the Container
+
+First, ensure you have Docker installed on your machine, then:
+1. Clone the repository containing the Stream Rust Test code
+2. Navigate to the root directory of the repository
+3. Run the build script to create the Docker image:
+   ```sh
+   ./scripts/docker/build.sh
+   ```
+
+### Run the Container
+
+#### Run the container with your configuration file
+
+To run the container with your configuration file:
+1. Ensure you have defined your astarte configuration file `config.toml`
+2. Run the Docker container, mounting the configuration file:
+   ```sh
+   docker run -v /path/to/your/config.toml:<MOUNT_TO_THIS_PATH> -e ASTARTE_CONFIG_PATH="<MOUNT_TO_THIS_PATH>" stream-rust-test:latest
+   ```
+
+Replace `/path/to/your/config.toml` with the actual path to your configuration file.
+
+Note: `MOUNT_TO_THIS_PATH` must be an absolute path.
+
+#### Run the container with environment variables
+
+You can configure the application with environment variables by exporting them (e.g. configuring
+them in the [docker-compose.yaml](https://docs.docker.com/compose/environment-variables/set-environment-variables/))
+or via the `--env-file` CLI options:
+
+```sh
+docker run --env-file /path/to/your/.env stream-rust-test:latest
+```
+
+Consult the `--help` for a full list of environment variable names and options.
+
+### Run the container in a separate network
+
+If you are running a local astarte instance, such the one in
+[Astarte in 5 minutes](https://docs.astarte-platform.org/astarte/latest/010-astarte_in_5_minutes.html),
+you can either modify the `docker-compose.yaml` by adding the `stream-rust-test` container to it or you can run it
+by using the `--network="host"` parameter, which is required to make `localhost` work.
+
+```sh
+docker run --network="host" [ENV VARS] [MOUNT config.toml] stream-rust-test:latest
+```
+
+## Update stream parameters
+
+Once the device is connected to Astarte and is sending data periodically, we can change the math function, the scale and
+the interval between 2 samples by publishing new values on a server-owned interface by using the `send-data` _astartectl_
+command.
+
+The syntax to use is the following:
+```
+astartectl appengine
+    --appengine-url <APPENGINE_URL>
+    --realm-management-url <REALM_MANAGEMENT_URL>
+    --realm-key <REALM>_private.pem
+    --realm-name <REALM> devices send-data <DEVICE_ID>
+    <SERVER_OWNED_INTERFACE> <ENDPOINT> <VALUE>
+ ```
+
+Where APPENGINE_URL, REALM_MANAGEMENT_URL and REALM are the appengine url, realm management url and your realm
+name respectively. The DEVICE_ID is the device ID to send the data to, ENDPOINT is the endpoint to send data to,
+which in this example should be composed by a sensor id and the math function, the scale or the interval endpoint
+(e.g. /sensor_id_123/function), and VALUE is the value to send (e.g. "sin" if _function_ is the chosen endpoint).
+
+For instance, supposing you are using an Astarte instance running on localhost:
+ ```
+astartectl appengine
+    --appengine-url http://api.astarte.localhost/appengine
+    --realm-management-url http://api.astarte.localhost/realmmanagement
+    --realm-key test_private.pem
+    --realm-name test devices send-data <DEVICE_ID>
+    org.astarte-platform.genericcommands.ServerCommands "/sensor_id_123/function" "sin"
+ ```
+
+### Pause and resume the stream
+
+Using the same command that changes stream parameters, you can toggle the stream's state, either stopping or resuming
+its operation. To do this, use the `/{%sensor_id}/toggle` endpoint with a boolean value.
+(Note that the boolean value is not used but is required since sending empty data is not possible.)
+
+When a `toggle` command is sent, the stream state switches from `On` (default), indicating that the stream is sending
+data to Astarte, to `Off`, where the stream stops sending data, or vice versa if the stream was previously paused by
+another toggle command.

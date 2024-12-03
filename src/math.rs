@@ -9,38 +9,6 @@
 use f64::consts::PI;
 use std::f64;
 use std::fmt::Display;
-use std::time::{SystemTime, SystemTimeError};
-
-/// Value used to derive other values to be sent to Astarte
-#[derive(Clone, Copy, Debug)]
-pub struct BaseValue {
-    value: f64,
-    scale: f64,
-}
-
-impl BaseValue {
-    /// Constructor
-    pub fn new(value: f64, scale: f64) -> Self {
-        Self { value, scale }
-    }
-
-    /// Construct with internal value derived from the system time
-    pub fn try_from_system_time(value: SystemTime, scale: f64) -> Result<Self, SystemTimeError> {
-        value
-            .elapsed()
-            .map(|t| BaseValue::new(t.as_secs_f64(), scale))
-    }
-
-    /// Get the inner value
-    pub fn value(&self) -> f64 {
-        self.value
-    }
-
-    /// Update the inner value
-    pub fn update(&mut self) {
-        self.value += PI * 2.0 * random_interval() * self.scale;
-    }
-}
 
 /// Math functions
 #[derive(Debug, Clone, Default, clap::ValueEnum)]
@@ -83,6 +51,22 @@ impl Display for MathFunction {
         };
 
         write!(f, "{s}")
+    }
+}
+
+impl<T: AsRef<str>> From<T> for MathFunction {
+    fn from(value: T) -> Self {
+        match value.as_ref() {
+            "sin" => Self::Sin,
+            "noise-sin" => Self::NoiseSin,
+            "random-spikes-sin" => Self::RandomSpikesSin,
+            "const" => Self::Const,
+            "saw" => Self::Saw,
+            "rect" => Self::Rect,
+            "sinc" => Self::Sinc,
+            "random" => Self::Random,
+            _ => Self::Default,
+        }
     }
 }
 
@@ -157,7 +141,7 @@ fn random() -> f64 {
     rand::random::<f64>()
 }
 
-fn random_interval() -> f64 {
+pub(crate) fn random_interval() -> f64 {
     (random() * 1000.0) % 600.0 + random()
 }
 
