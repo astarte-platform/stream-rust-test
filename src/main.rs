@@ -11,6 +11,7 @@ use color_eyre::eyre::WrapErr;
 use std::time::SystemTime;
 use stream_rust_test::astarte::{send_data, ConnectionConfigBuilder, SdkConnection};
 use stream_rust_test::cli::Config;
+use stream_rust_test::shutdown::shutdown;
 use tokio::task::JoinSet;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
@@ -51,6 +52,13 @@ async fn main() -> eyre::Result<()> {
     if let Err(err) = astarte_cfg_builder.try_from_env() {
         warn!("failed to retrieve Astarte connection config from ENV: {err}");
 
+        #[cfg(feature = "docker")]
+        {
+            let path = std::path::PathBuf::from("/etc/stream-rust-test/config.toml");
+            astarte_cfg_builder.from_toml(path).await;
+        }
+
+        #[cfg(not(feature = "docker"))]
         if let Some(path) = &cli_cfg.astarte_config_path {
             let path = path.join("config.toml");
             info!("retrieve Astarte connection config from {}", path.display());
@@ -76,17 +84,30 @@ async fn main() -> eyre::Result<()> {
     tasks.spawn(send_data(client, now, cli_cfg));
 
     // handle tasks termination
-    while let Some(res) = tasks.join_next().await {
-        match res {
-            Ok(Ok(())) => {}
-            Err(err) if err.is_cancelled() => {}
-            Err(err) => {
-                error!(error = %err, "Task panicked");
-                return Err(err.into());
-            }
-            Ok(Err(err)) => {
-                error!(error = %err, "Task returned an error");
-                return Err(err);
+    loop {
+        tokio::select! {
+            _ = shutdown()? => {
+                info!("CTRL C received, shutting down");
+                tasks.abort_all();
+                break;
+            },
+            opt = tasks.join_next() => {
+                let Some(res) = opt else {
+                    break;
+                };
+
+                match res {
+                        Ok(Ok(())) => {}
+                        Err(err) if err.is_cancelled() => {}
+                        Err(err) => {
+                            error!(error = %err, "Task panicked");
+                            return Err(err.into());
+                        }
+                        Ok(Err(err)) => {
+                            error!(error = %err, "Task returned an error");
+                            return Err(err);
+                        }
+                    }
             }
         }
     }

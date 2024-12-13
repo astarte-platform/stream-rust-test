@@ -10,3 +10,4 @@
 pub mod astarte;
 pub mod cli;
 pub mod math;
+pub mod shutdown;

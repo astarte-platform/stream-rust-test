@@ -16,7 +16,7 @@ device_id = "DEVICE_ID_HERE"
 pairing_url = "PAIRING_URL_HERE"
 credentials_secret = "CREDENTIALS_SECRET_HERE"
 #pairing_token = "PAIRING_TOKEN_HERE"
-astarte_ignore_ssl = false
+ignore_ssl_errors = false
 
 # ####################################################
 # Use the following to connect through gRPC to Astarte
