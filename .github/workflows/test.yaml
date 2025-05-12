@@ -30,7 +30,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
       - name: Install sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.5
+        uses: mozilla-actions/sccache-action@v0.0.9
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
@@ -48,7 +48,7 @@ jobs:
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
       - name: Install sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.5
+        uses: mozilla-actions/sccache-action@v0.0.9
       # Setup vcpkg binary cache
       # https://learn.microsoft.com/en-us/vcpkg/users/binarycaching#gha-quickstart
       - uses: actions/github-script@v7
@@ -75,7 +75,7 @@ jobs:
         with:
           components: llvm-tools-preview
       - name: Install sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.5
+        uses: mozilla-actions/sccache-action@v0.0.9
       - name: cargo install cargo-tarpaulin
         uses: taiki-e/install-action@cargo-tarpaulin
       - name: cargo generate-lockfile
@@ -86,7 +86,7 @@ jobs:
       # Upload the coverage if we are not a PR from a fork, see ".github/workflows/coverage.yaml"
       - name: Upload to codecov.io
         if: ${{ github.event_name == 'push' }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{secrets.CODECOV_TOKEN}}
           fail_ci_if_error: true
