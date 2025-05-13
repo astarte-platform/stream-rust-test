@@ -1,0 +1,12 @@
+# This file can be used to properly set up the connection configuration with Astarte.
+#
+# It is possible to either use a direct mqtt to Astarte or a grpc connection to an Astarte Message Hub running instance
+# already connected to Astarte.
+
+[astarte]
+connection = "grpc"
+store_directory = "/var/lib/stream-rust-test/"
+
+[astarte.grpc]
+endpoint = "http://127.0.0.1:50051"
+# node_id = "ASTARTE_MSGHUB_NODE_ID_HERE"
