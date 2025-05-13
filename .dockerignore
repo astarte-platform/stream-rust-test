@@ -5,4 +5,4 @@
 /.github
 /.reuse
 /scripts/docker
-!/scripts/docker/entrypoint.sh
+!/scripts/docker/stream-rust-test/entrypoint.sh

@@ -15,7 +15,7 @@ RUN cargo build --features "docker" --release
 
 FROM alpine:3.20
 
-COPY scripts/docker/entrypoint.sh /entrypoint.sh
+COPY scripts/docker/stream-rust-test/entrypoint.sh /entrypoint.sh
 
 COPY --from=build /stream-rust-test/target/release/stream-rust-test /usr/bin/
 
