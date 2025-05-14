@@ -177,3 +177,44 @@ work.
 ```sh
 docker run --network="host" [ENV VARS] [MOUNT config.toml] stream-rust-test:latest
 ```
+
+## Update stream parameters
+
+Once the device is connected to Astarte and is sending data periodically, we can change the math function, the scale and
+the interval between 2 samples by publishing new values on a server-owned interface by using the `send-data` _astartectl_
+command.
+
+The syntax to use is the following:
+```
+astartectl appengine
+    --appengine-url <APPENGINE_URL>
+    --realm-management-url <REALM_MANAGEMENT_URL>
+    --realm-key <REALM>_private.pem
+    --realm-name <REALM> devices send-data <DEVICE_ID>
+    <SERVER_OWNED_INTERFACE> <ENDPOINT> <VALUE>
+ ```
+
+Where APPENGINE_URL, REALM_MANAGEMENT_URL and REALM are the appengine url, realm management url and your realm
+name respectively. The DEVICE_ID is the device ID to send the data to, ENDPOINT is the endpoint to send data to,
+which in this example should be composed by a sensor id and the math function, the scale or the interval endpoint
+(e.g. /sensor_id_123/function), and VALUE is the value to send (e.g. "sin" if _function_ is the chosen endpoint).
+
+For instance, supposing you are using an Astarte instance running on localhost:
+ ```
+astartectl appengine
+    --appengine-url http://api.astarte.localhost/appengine
+    --realm-management-url http://api.astarte.localhost/realmmanagement
+    --realm-key test_private.pem
+    --realm-name test devices send-data <DEVICE_ID>
+    org.astarte-platform.genericcommands.ServerCommands "/sensor_id_123/function" "sin"
+ ```
+
+### Pause and resume the stream
+
+Using the same command that changes stream parameters, you can toggle the stream's state, either stopping or resuming
+its operation. To do this, use the `/{%sensor_id}/toggle` endpoint with a boolean value.
+(Note that the boolean value is not used but is required since sending empty data is not possible.)
+
+When a `toggle` command is sent, the stream state switches from `On` (default), indicating that the stream is sending
+data to Astarte, to `Off`, where the stream stops sending data, or vice versa if the stream was previously paused by
+another toggle command.

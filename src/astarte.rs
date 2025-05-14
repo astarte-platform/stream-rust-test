@@ -6,26 +6,26 @@
 
 //! Astarte builder and configuration structures.
 
-use crate::cli::Config;
-use crate::math::BaseValue;
 use astarte_device_sdk::builder::{DeviceBuilder, DeviceSdkBuild};
 use astarte_device_sdk::store::SqliteStore;
 use astarte_device_sdk::transport::grpc::{Grpc, GrpcConfig};
 use astarte_device_sdk::transport::mqtt::{Credential, Mqtt, MqttConfig};
-use astarte_device_sdk::{Client, DeviceClient, DeviceConnection};
+use astarte_device_sdk::{DeviceClient, DeviceConnection};
 use clap::ValueEnum;
 use color_eyre::eyre;
 use color_eyre::eyre::{bail, eyre, OptionExt, WrapErr};
 use serde::Deserialize;
 use std::env::VarError;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
 use std::{env, io};
-use tracing::{debug, error};
+use tracing::{debug, error, instrument};
 use uuid::{uuid, Uuid};
 
 const DEVICE_DATASTREAM: &str =
     include_str!("../interfaces/org.astarte-platform.genericsensors.Values.json");
+
+const SERVER_DATASTREAM: &str =
+    include_str!("../interfaces/org.astarte-platform.genericcommands.ServerCommands.json");
 
 const DEFAULT_STREAM_NODE_ID: Uuid = uuid!("d72a6187-7cf1-44cc-87e8-e991936166dc");
 
@@ -76,6 +76,7 @@ impl ConnectionConfigBuilder {
     /// Init astarte config from env var if they have been set
     ///
     /// If an error is returned, it means that one or more environment variables have not been set
+    #[instrument(skip_all)]
     pub fn try_from_env(&mut self) -> eyre::Result<()> {
         let con = env::var("ASTARTE_CONNECTION")
             .map(|s| AstarteConnection::from_str(&s, true))?
@@ -128,6 +129,7 @@ impl ConnectionConfigBuilder {
     }
 
     /// Update the missing config values taking them from a config.toml file
+    #[instrument(skip_all)]
     pub async fn from_toml(&mut self, path: impl AsRef<Path>) {
         match tokio::fs::read_to_string(&path).await {
             Ok(file) => {
@@ -152,6 +154,7 @@ impl ConnectionConfigBuilder {
     }
 
     /// Build a complete Astarte configuration or return an error
+    #[instrument(skip_all)]
     pub async fn build(self) -> eyre::Result<(DeviceClient<SqliteStore>, SdkConnection)> {
         let astarte_connection = self
             .astarte_connection
@@ -162,7 +165,8 @@ impl ConnectionConfigBuilder {
         let builder = DeviceBuilder::new()
             .store_dir(&store_directory)
             .await?
-            .interface_str(DEVICE_DATASTREAM)?;
+            .interface_str(DEVICE_DATASTREAM)?
+            .interface_str(SERVER_DATASTREAM)?;
 
         match astarte_connection {
             AstarteConnection::Mqtt => {
@@ -249,37 +253,6 @@ struct GrpcConfigBuilder {
 impl GrpcConfigBuilder {
     fn build(self) -> eyre::Result<GrpcConfig> {
         GrpcConfig::from_url(self.node_id, self.endpoint).wrap_err("failed to create a gRPC config")
-    }
-}
-
-/// Send data to Astarte
-pub async fn send_data(
-    client: DeviceClient<SqliteStore>,
-    now: SystemTime,
-    cfg: Config,
-) -> eyre::Result<()> {
-    let mut base_value = BaseValue::try_from_system_time(now, cfg.scale)?;
-
-    debug!(
-        "sending data to Astarte with {} math function",
-        cfg.math_function
-    );
-
-    loop {
-        // Send data to Astarte
-        let value = cfg.math_function.compute(base_value.value());
-
-        client
-            .send(&cfg.interface_datastream_do, "/test/value", value)
-            .await?;
-
-        debug!("data sent on endpoint /test/value, content: {value}");
-
-        // update the data to send at the next iteration
-        base_value.update();
-
-        // Sleep interval secs
-        tokio::time::sleep(std::time::Duration::from_millis(cfg.interval_btw_samples)).await;
     }
 }
 

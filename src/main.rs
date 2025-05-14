@@ -8,10 +8,10 @@ use astarte_device_sdk::EventLoop;
 use clap::Parser;
 use color_eyre::eyre;
 use color_eyre::eyre::WrapErr;
-use std::time::SystemTime;
-use stream_rust_test::astarte::{send_data, ConnectionConfigBuilder, SdkConnection};
+use stream_rust_test::astarte::{ConnectionConfigBuilder, SdkConnection};
 use stream_rust_test::cli::Config;
 use stream_rust_test::shutdown::shutdown;
+use stream_rust_test::StreamManager;
 use tokio::task::JoinSet;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
@@ -34,9 +34,6 @@ async fn main() -> eyre::Result<()> {
         .with(fmt::layer())
         .with(filter)
         .init();
-
-    // time instant when the program starts its execution
-    let now = SystemTime::now();
 
     // initialize CLI configuration options
     let cli_cfg = Config::parse();
@@ -93,8 +90,8 @@ async fn main() -> eyre::Result<()> {
         }
     }
 
-    // spawn task to send data to Astarte
-    tasks.spawn(send_data(client, now, cli_cfg));
+    let stream_manager = StreamManager::new(cli_cfg).await?;
+    tasks.spawn(stream_manager.handle(client));
 
     // handle tasks termination
     loop {

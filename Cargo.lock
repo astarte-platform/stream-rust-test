@@ -122,6 +122,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bae0eac94b76f3be87f1c91e1b16964ecbfb5fb001d2cd71d503c8d87ea49979"
 dependencies = [
  "ahash",
+ "astarte-device-sdk-derive",
  "astarte-message-hub-proto",
  "async-trait",
  "base64 0.22.1",
@@ -154,6 +155,17 @@ dependencies = [
  "url",
  "uuid",
  "zerofrom",
+]
+
+[[package]]
+name = "astarte-device-sdk-derive"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c89dce73bc73ce21d93e392cf14811e86cd921d903d7a8fe30254c0bfbbeebc"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
